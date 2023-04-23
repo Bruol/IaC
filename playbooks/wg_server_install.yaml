@@ -1,0 +1,19 @@
+# Work in Progress
+- name: Install Wireguard
+  hosts: wireguard
+  tasks:
+    - name: Install Wireguard
+      ansible.builtin.apt:
+        name: wireguard
+        state: latest
+        update_cache: true
+      become: true
+      become_method: sudo
+      become_user: root
+
+    - name: Generate Serverkey
+      ansible.builtin.shell: wg genkey
+      register: serverkey
+      become: true
+      become_method: sudo
+      become_user: root
