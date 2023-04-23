@@ -1,0 +1,10 @@
+- name: Touch /root/.hushlogin
+  hosts: test
+  tasks:
+    - name: Touch /root/.hushlogin
+      ansible.builtin.file:
+        path: /root/.hushlogin
+        state: touch
+        mode: 0600
+        owner: root
+        group: root
