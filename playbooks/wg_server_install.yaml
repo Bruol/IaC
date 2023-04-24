@@ -5,7 +5,7 @@
     - name: Install Wireguard
       ansible.builtin.apt:
         name: wireguard
-        state: latest
+        state: present
         update_cache: true
       become: true
       become_method: sudo
