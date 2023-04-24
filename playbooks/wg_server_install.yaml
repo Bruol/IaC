@@ -12,8 +12,13 @@
       become_user: root
 
     - name: Generate Serverkey
-      ansible.builtin.shell: wg genkey
+      ansible.builtin.shell: |
+        set -o pipefail
+        wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
       register: serverkey
+      args:
+        chdir: /etc/wireguard
+        creates: /etc/wireguard/private.key
       become: true
       become_method: sudo
       become_user: root
