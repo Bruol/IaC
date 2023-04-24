@@ -1,6 +1,6 @@
 # Work in Progress
 - name: Install Wireguard
-  hosts: wireguard
+  hosts: test
   tasks:
     - name: Install Wireguard
       ansible.builtin.apt:
@@ -12,9 +12,7 @@
       become_user: root
 
     - name: Generate Serverkey
-      ansible.builtin.shell: |
-        set -o pipefail
-        wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
+      ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
       register: serverkey
       args:
         chdir: /etc/wireguard
