@@ -9,7 +9,46 @@
 
     - name: Generate Serverkey
       ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
-      register: serverkey
+      register: key_gen_result
       args:
         chdir: /etc/wireguard
         creates: /etc/wireguard/private.key
+
+    - name: Copy private key to variable
+      ansible.builtin.command: cat /etc/wireguard/private.key
+      register: private_key
+      changed_when: false
+
+    - name: Stop Wireguard
+      ansible.builtin.service:
+        name: wg-quick@{{ wg_interface_name }}
+        state: stopped
+        enabled: true
+
+    - name: Copy Wireguard Template
+      ansible.builtin.template:
+        src: wg.conf.j2
+        dest: /etc/wireguard/{{ wg_interface_name }}.conf
+        owner: root
+        group: root
+        mode: 0600
+
+    - name: Allow IPv4 Forwarding
+      ansible.posix.sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+        state: present
+        reload: true
+
+    - name: Allow IPv6 Forwarding
+      ansible.posix.sysctl:
+        name: net.ipv6.conf.all.forwarding
+        value: 1
+        state: present
+        reload: true
+
+    - name: Start Wireguard
+      ansible.builtin.service:
+        name: wg-quick@{{ wg_interface_name }}
+        state: started
+        enabled: true
