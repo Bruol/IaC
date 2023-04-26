@@ -1,2 +1,3 @@
 /inventory/hosts
 secrets.yml
+/playbooks/wireguard_client_configs/*
