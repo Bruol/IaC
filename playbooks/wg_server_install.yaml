@@ -1,6 +1,6 @@
 # Work in Progress
 - name: Install Wireguard
-  hosts: test
+  hosts: wireguard
   tasks:
     - name: Install packages
       ansible.builtin.package:
