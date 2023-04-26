@@ -2,14 +2,10 @@
 - name: Install Wireguard
   hosts: test
   tasks:
-    - name: Install Wireguard
-      ansible.builtin.apt:
-        name: wireguard
+    - name: Install packages
+      ansible.builtin.package:
+        name: "{{ packages }}"
         state: present
-        update_cache: true
-      become: true
-      become_method: sudo
-      become_user: root
 
     - name: Generate Serverkey
       ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
@@ -17,6 +13,3 @@
       args:
         chdir: /etc/wireguard
         creates: /etc/wireguard/private.key
-      become: true
-      become_method: sudo
-      become_user: root
