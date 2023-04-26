@@ -2,53 +2,18 @@
 - name: Install Wireguard
   hosts: wireguard
   tasks:
-    - name: Install packages
-      ansible.builtin.package:
-        name: "{{ packages }}"
-        state: present
+    - name: Install Packages
+      ansible.builtin.import_tasks:
+        file: wg_tasks/0_install_packages.yaml
 
-    - name: Generate Serverkey
-      ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
-      register: key_gen_result
-      args:
-        chdir: /etc/wireguard
-        creates: /etc/wireguard/private.key
+    - name: Generate private Key
+      ansible.builtin.import_tasks:
+        file: wg_tasks/1_generate_private_key.yaml
 
-    - name: Copy private key to variable
-      ansible.builtin.command: cat /etc/wireguard/private.key
-      register: private_key
-      changed_when: false
+    - name: Configure sysctl
+      ansible.builtin.import_tasks:
+        file: wg_tasks/2_configure_sysctl.yaml
 
-    - name: Stop Wireguard
-      ansible.builtin.service:
-        name: wg-quick@{{ wg_interface_name }}
-        state: stopped
-        enabled: true
-
-    - name: Copy Wireguard Template
-      ansible.builtin.template:
-        src: wg.conf.j2
-        dest: /etc/wireguard/{{ wg_interface_name }}.conf
-        owner: root
-        group: root
-        mode: 0600
-
-    - name: Allow IPv4 Forwarding
-      ansible.posix.sysctl:
-        name: net.ipv4.ip_forward
-        value: 1
-        state: present
-        reload: true
-
-    - name: Allow IPv6 Forwarding
-      ansible.posix.sysctl:
-        name: net.ipv6.conf.all.forwarding
-        value: 1
-        state: present
-        reload: true
-
-    - name: Start Wireguard
-      ansible.builtin.service:
-        name: wg-quick@{{ wg_interface_name }}
-        state: started
-        enabled: true
+    - name: Copy WG Config
+      ansible.builtin.import_tasks:
+        file: wg_tasks/3_copy_server_config.yaml

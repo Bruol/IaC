@@ -1,0 +1,13 @@
+- name: Allow IPv4 Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    reload: true
+
+- name: Allow IPv6 Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv6.conf.all.forwarding
+    value: 1
+    state: present
+    reload: true
