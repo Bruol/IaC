@@ -2,7 +2,7 @@
   ansible.builtin.apt:
     update_cache: yes
     upgrade: true
-    
+
 - name: Install packages
   ansible.builtin.package:
     name: "{{ packages }}"

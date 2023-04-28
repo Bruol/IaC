@@ -1,5 +1,5 @@
 - name: Touch /root/.hushlogin
-  hosts: test
+  hosts: all
   tasks:
     - name: Touch /root/.hushlogin
       ansible.builtin.file:

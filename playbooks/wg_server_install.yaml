@@ -17,3 +17,7 @@
     - name: Copy WG Config
       ansible.builtin.import_tasks:
         file: wg_tasks/3_copy_server_config.yaml
+
+    - name: Add Peers
+      ansible.builtin.import_tasks:
+        file: wg_tasks/4_add_peer.yaml

@@ -12,6 +12,5 @@ wg_internal_IP_range: 10.0.0.1/24
 wg_listen_port: 51820
 
 peers:
-  - handy
-  - tablet
-  - laptop
+  - { name: "handy", ip: "10.0.0.2" , private_key: "", public_key: ""}
+  - { name: "tablet", ip: "10.0.0.3" , private_key: "", public_key: ""}

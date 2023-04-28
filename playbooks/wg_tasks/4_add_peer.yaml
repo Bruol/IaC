@@ -1,0 +1,51 @@
+# - name: Stopp wireguard
+#   systemd:
+#     name: wg-quick@{{ wg_interface_name }}
+#     state: stopped
+
+- name: Add Peer Folders
+  ansible.builtin.file:
+    path: /etc/wireguard/peers/{{ item.name }}
+    state: directory
+  loop: "{{ peers }}"
+
+- name: Generate {{ item.name }} Private key
+  ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/peers/{{ item.name }}/private.key
+  args:
+    chdir: /etc/wireguard/peers/{{ item.name }}
+    creates: /etc/wireguard/peers//{{ item.name }}/private.key
+  loop: "{{ peers }}"
+
+- name: Generate {{ item.name }} Public key
+  ansible.builtin.shell: set -o pipefail && cat /etc/wireguard/peers/{{ item.name }}/private.key | wg pubkey > /etc/wireguard/peers/{{ item.name }}/public.key
+  args:
+    chdir: /etc/wireguard/peers/{{ item.name }}
+    creates: /etc/wireguard/peers/{{ item.name }}/public.key
+  loop: "{{ peers }}"
+
+- name: set {{ item.name }} private key as fact
+  ansible.builtin.command: cat /etc/wireguard/peers/{{ item.name }}/private.key
+  register: private_keys
+  changed_when: false
+  loop: "{{ peers }}"
+
+- name: Copy {{ item.name }} public key as fact
+  ansible.builtin.command: cat /etc/wireguard/peers/{{ item.name }}/public.key
+  register: public_keys
+  changed_when: false
+  loop: "{{ peers }}"
+
+- name: Add {{ item.name }} to server config
+  ansible.builtin.blockinfile:
+    path: /etc/wireguard/{{ wg_interface_name }}.conf
+    insertafter: '^PrivateKey = .*'
+    block: |
+      \n
+      # {{ item.name }}
+      [Peer]
+      PublicKey = {{ item.public_key.stdout }}
+      AllowedIPs = {{ item.ip }}/32
+  loop: "{{ peers }}"
+
+
+
