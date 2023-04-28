@@ -21,3 +21,7 @@
     - name: Add Peers
       ansible.builtin.import_tasks:
         file: wg_tasks/4_add_peer.yaml
+
+    - name: Copy to local
+      ansible.builtin.import_tasks:
+        file: wg_tasks/5_create_client_qr.yaml

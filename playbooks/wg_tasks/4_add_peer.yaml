@@ -1,51 +1,77 @@
-# - name: Stopp wireguard
-#   systemd:
-#     name: wg-quick@{{ wg_interface_name }}
-#     state: stopped
+- name: Stopp wireguard
+  ansible.builtin.systemd:
+    name: wg-quick@{{ wg_interface_name }}
+    state: stopped
+
+- name: Check if Folders exist
+  ansible.builtin.stat:
+    path: /etc/wireguard/peers/{{ item.name }}
+  register: peer_folders
+  loop: "{{ peers }}"
 
 - name: Add Peer Folders
   ansible.builtin.file:
-    path: /etc/wireguard/peers/{{ item.name }}
+    path: /etc/wireguard/peers/{{ item.item.name }}
     state: directory
-  loop: "{{ peers }}"
+  when: not item.stat.exists
+  loop: "{{ peer_folders.results }}"
 
-- name: Generate {{ item.name }} Private key
-  ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/peers/{{ item.name }}/private.key
+- name: Generate Private key
+  ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/peers/{{ item.item.name }}/private.key
   args:
-    chdir: /etc/wireguard/peers/{{ item.name }}
-    creates: /etc/wireguard/peers//{{ item.name }}/private.key
-  loop: "{{ peers }}"
+    chdir: /etc/wireguard/peers/{{ item.item.name }}
+    creates: /etc/wireguard/peers//{{ item.item.name }}/private.key
+  when: not item.stat.exists
+  loop: "{{ peer_folders.results }}"
 
-- name: Generate {{ item.name }} Public key
-  ansible.builtin.shell: set -o pipefail && cat /etc/wireguard/peers/{{ item.name }}/private.key | wg pubkey > /etc/wireguard/peers/{{ item.name }}/public.key
+- name: Generate Public key {{ item.name }}
+  ansible.builtin.shell: set -o pipefail && cat /etc/wireguard/peers/{{ item.item.name }}/private.key | wg pubkey > /etc/wireguard/peers/{{ item.item.name }}/public.key
   args:
-    chdir: /etc/wireguard/peers/{{ item.name }}
-    creates: /etc/wireguard/peers/{{ item.name }}/public.key
-  loop: "{{ peers }}"
+    chdir: /etc/wireguard/peers/{{ item.item.name }}
+    creates: /etc/wireguard/peers/{{ item.item.name }}/public.key
+  when: not item.stat.exists
+  loop: "{{ peer_folders.results }}"
 
-- name: set {{ item.name }} private key as fact
+- name: Get private keys into variable
   ansible.builtin.command: cat /etc/wireguard/peers/{{ item.name }}/private.key
   register: private_keys
   changed_when: false
   loop: "{{ peers }}"
 
-- name: Copy {{ item.name }} public key as fact
+- name: Get public key into vaiable
   ansible.builtin.command: cat /etc/wireguard/peers/{{ item.name }}/public.key
   register: public_keys
   changed_when: false
   loop: "{{ peers }}"
 
-- name: Add {{ item.name }} to server config
+- name: Add to server config {{ item.item.name }}
   ansible.builtin.blockinfile:
     path: /etc/wireguard/{{ wg_interface_name }}.conf
     insertafter: '^PrivateKey = .*'
+    marker: "\n\n # {mark} ANSIBLE MANAGED BLOCK for {{ item.item.name }}"
     block: |
-      \n
-      # {{ item.name }}
       [Peer]
-      PublicKey = {{ item.public_key.stdout }}
-      AllowedIPs = {{ item.ip }}/32
-  loop: "{{ peers }}"
+      PublicKey = {{ item.stdout }}
+      AllowedIPs = {{ item.item.ip }}/32
+  loop: "{{ public_keys.results }}"
 
+- name: Stopp wireguard
+  ansible.builtin.systemd:
+    name: wg-quick@{{ wg_interface_name }}
+    state: started
 
+- name: Get server public key
+  ansible.builtin.command: cat /etc/wireguard/public.key
+  register: pub_key
+  changed_when: false
 
+- name: Create Client configs
+  ansible.builtin.template:
+    src: templates/wireguard/wg_client.conf.j2
+    dest: /etc/wireguard/peers/{{ item.item.name }}/{{ item.item.name }}.conf
+  vars:
+    client_ip: "{{ item.item.ip }}"
+    client_priv_key: "{{ item.stdout }}"
+    server_pub_key: "{{ pub_key.stdout }}"
+    client_ip_forward_range: "{{ item.item.ip_forward_range }}"
+  loop: "{{ private_keys.results }}"

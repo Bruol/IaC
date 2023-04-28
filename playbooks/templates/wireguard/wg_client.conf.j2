@@ -1,0 +1,8 @@
+[Interface]
+Address = {{ client_ip }}/24
+PrivateKey = {{ client_priv_key }}
+
+[Peer] #server
+PublicKey = {{ server_pub_key }}
+Endpoint = {{ wg_server_ip }}:{{ wg_listen_port }}
+AllowedIPs = {{ client_ip_forward_range }}

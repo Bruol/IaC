@@ -1,0 +1,15 @@
+- name: Create QR_Codes
+  ansible.builtin.command: qrencode -t PNG -r /etc/wireguard/peers/{{ item.name  }}/{{ item.name }}.conf -o /etc/wireguard/peers/{{ item.name }}/{{ item.name }}.png
+  loop: "{{ peers }}"
+
+- name: Copy QR_Codes to local
+  ansible.builtin.fetch:
+    src: /etc/wireguard/peers/{{ item.name }}/{{ item.name }}.png
+    dest: wireguard_client_configs/
+  loop: "{{ peers }}"
+
+- name: Copy Client configs to local
+  ansible.builtin.fetch:
+    src: /etc/wireguard/peers/{{ item.name }}/{{ item.name }}.conf
+    dest: wireguard_client_configs/
+  loop: "{{ peers }}"

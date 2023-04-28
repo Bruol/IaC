@@ -5,6 +5,9 @@ packages:
 # This should be the name of the wireguard interface
 wg_interface_name: wg0
 
+# public IP of server
+wg_server_ip: example.com
+
 # This should be the ip address of the server in the wireguard network with CIDR of the internatl Network
 wg_internal_IP_range: 10.0.0.1/24
 
@@ -12,5 +15,7 @@ wg_internal_IP_range: 10.0.0.1/24
 wg_listen_port: 51820
 
 peers:
-  - { name: "handy", ip: "10.0.0.2" , private_key: "", public_key: ""}
-  - { name: "tablet", ip: "10.0.0.3" , private_key: "", public_key: ""}
+  - { name: "handy", ip: "10.0.0.2", ip_forward_range: "0.0.0.0/0" }
+  - { name: "tablet", ip: "10.0.0.3", ip_forward_range: "0.0.0.0/0" }
+  - { name: "laptop", ip: "10.0.0.4" , ip_forward_range: "0.0.0.0/0"}
+

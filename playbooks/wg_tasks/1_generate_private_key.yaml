@@ -1,14 +1,21 @@
+- name: Check if key exists
+  ansible.builtin.stat:
+    path: /etc/wireguard/private.key
+  register: private_key_exists
+
 - name: Generate Serverkey
   ansible.builtin.shell: set -o pipefail && wg genkey | tee /etc/wireguard/private.key
   args:
     chdir: /etc/wireguard
     creates: /etc/wireguard/private.key
+  when: not private_key_exists.stat.exists
 
 - name: Generate Server Public Key
   ansible.builtin.shell: set -o pipefail && cat /etc/wireguard/private.key | wg pubkey > /etc/wireguard/public.key
   args:
     chdir: /etc/wireguard
     creates: /etc/wireguard/public.key
+  when: not private_key_exists.stat.exists
 
 - name: Copy private key to variable
   ansible.builtin.command: cat /etc/wireguard/private.key
